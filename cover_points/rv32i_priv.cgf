@@ -1,0 +1,548 @@
+ecall:
+  config: 
+    - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
+  mnemonics: 
+    ecall: 0
+
+ebreak:
+  config: 
+    - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
+  mnemonics: 
+    ebreak: 0
+    
+ 
+misa_check_combination:
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*F.*D); 
+  csr_comb:
+    (misa & 0x08) | (misa & 0x20) == 0 : 0			# setting “F”=0 and “D”=1 should results in both “F” and “D” being cleared.
+
+
+misa_mxl_check:
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  csr_comb:
+    misa >> (xlen-2) == 0x01 : 0				# A coverpoint which checks whether the mxl field of misa register is 1.
+
+
+mstatus_Smode:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 1) & 0x01 == 0x01 : 0				# checking if the SIE gets enabled
+    (mstatus >> 5) & 0x01 == 0x01 : 0 			# checking SPIE bit 
+    (mstatus >> 8) & 0x01 == 0x01 : 0 			# checking SPP bit
+    (mstatus >> 22) & 0x1 == 0x01 : 0 			# When TSR=1, attempts to execute SRET while executing in S-mode will raise an illegal instruction exception.  
+    (mstatus >> 36) & 0x1 == 0x01 : 0 			# check SBE = 1, it controls whether explicit load and store memory accesses made from S-mode is big-endian  
+    
+    
+
+mstatus_Mmode:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 3) & 0x01 == 0x01 : 0 			# checking if the MIE gets enabled
+    (mstatus >> 7) & 0x01 == 0x01 : 0 			# MPIE holds the value of the interrupt-enable bit active prior to the trap, checking whether it does that or not
+    (mstatus >> 10) & 0x3 == 0x3 : 0				# The xPP fields can only hold privilege modes up to x, so MPP is two bits wide, checking when if it becomes 11
+    (mstatus >> 10) & 0x2 == 0x2 : 0				# The xPP fields can only hold privilege modes up to x, so MPP is two bits wide, checking when if it becomes 10  
+    (mstatus >> 10) & 0x1 == 0x1 : 0				# The xPP fields can only hold privilege modes up to x, so MPP is two bits wide, checking when if it becomes 01  
+    (mstatus >> 17) & 0x1 == 0x01 : 0 			# checking MPRV, When MPRV=1, load and store memory addresses are translated and protected, and endianness is applied
+    (mstatus >> 19) & 0x1 == 0x01 : 0 			# check when MXR == 1    
+    (mstatus >> 37) & 0x1 == 0x01 : 0 			# check MBE = 1, it controls whether non-instruction-fetch memory accesses made from M-mode is big-endian
+
+
+mstatus_Umode:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 32) & 0x3 == 0x3 : 0				# checking UXL bits, If MXLEN is changed from 32 to a wider width, each of mstatus fields SXL and UXL, if not restricted to a single 									# value, gets the value corresponding to the widest supported width not wider than the new MXLEN.
+    (mstatus >> 18) & 0x1 == 0x01 : 0 			# check When SUM=1.  accesses to pages that are accessible by U-mode are permitted.
+    (mstatus >> 6) & 0x1 == 0x01 : 0 				# check UBE = 1, it controls whether explicit load and store memory accesses made from U-mode is big-endian
+
+
+mstatus:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 36) & (mstatus >> 37) & (mstatus >> 6) == 0 : 0 # when MBE = 0 and SBE = 0 and UBE = 0, accesses made are little endian
+    (mstatus >> 20) & 0x1 == 0x01 : 0 			# check when TVM = 1.
+    (mstatus >> 21) & 0x1 == 0x01 : 0 			# check when TW = 1.    
+
+    (mstatus & 0x3000) | (mstatus & 0x300) == (mstatus >> 31) : 0 # The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state
+    
+mstatus_checking_SD:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*F.*V); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb: 
+    (mstatus & 0x3000) | (mstatus & 0x300) == (mstatus >> 31) : 0 # The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state 
+    
+    
+mstatus_checking_WPRI:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check islegal(0,mstatus,rv32) = True; check islegal(2,mstatus,rv32) = True; check islegal(4,mstatus,rv32) = True;
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb: 
+   
+   
+mtvec:  
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mtvec << 1) & 0x01 == 0x01 : 0				# checking if Asynchronous interrupts set pc to BASE+4×cause.
+    
+
+mideleg:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+     (mideleg >> 5) & 0x01 == 0x01 : 0			# if mideleg[5] is not set, STIs can be taken in any mode	
+     (mideleg >> 1) & 0x01 == 0x01 : 0			# Supervisor software interrupt
+     (mideleg >> 3) & 0x03 == 0x01 : 0			# Machine software interrupt
+     (mideleg >> 5) & 0x05 == 0x01 : 0			# Supervisor timer interrupt
+     (mideleg >> 7) & 0x07 == 0x01 : 0			# Machine timer interrupt
+     (mideleg >> 9) & 0x09 == 0x01 : 0			# Supervisor external interrupt
+     (mideleg >> 11) & 0x11 == 0x01 : 0			# Machine external interrupt
+
+
+medeleg:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+     (medeleg >> 11) & 0x01 = 0x00 : 0			# medeleg[11] is read only zero
+     medeleg & 0x00 == 0 : 0				# instruction address misalligned
+     medeleg & 0x01 == 0x01 : 0				# instruction access fault
+     medeleg & 0x02 == 0x02 : 0				# illegal instruction
+     medeleg & 0x04 == 0x04 : 0				# load address misalligned
+     medeleg & 0x05 == 0x05 : 0				# load access fault	
+     medeleg & 0x06 == 0x06 : 0				# Store/AMO address misaligned	
+     medeleg & 0x07 == 0x07 : 0				# Store/AMO access fault	
+     medeleg & 0x08 == 0x08 : 0				# Environment call from U-mode	
+     medeleg & 0x09 == 0x09 : 0				# Environment call from S-mode
+     medeleg & 0x11 == 0x11 : 0				# Environment call from M-mode
+     medeleg & 0x12 == 0x12 : 0				# Instruction page fault
+     medeleg & 0x13 == 0x13 : 0				# Load page fault	
+     medeleg & 0x15 == 0x15 : 0			 	# Store/AMO page fault				
+
+mie:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mie >> 1) & 0x01 == 0x01 : 0				# checking SSIE bit
+    (mie >> 3) & 0x01 == 0x01 : 0				# checking MSIE bit
+    (mie >> 3) & 0x01 == 0x00 : 0				# If a system has only one hart, or if a platform standard supports the delivery of machine-level interprocessor interrupts through 
+    								# external interrupts (MEI) instead
+    (mie >> 5) & 0x01 == 0x01 : 0				#  STIP interrupt delegtion control is located in bit 5
+    (mie >> 7) & 0x01 == 0x01 : 0				# checking MTIE bit
+    (mie >> 9) & 0x1 == 0x01 : 0				# checking SEIE 
+    (mie >> 11) & 0x01 == 0x01 : 0				# checking MEIE
+    
+mip:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mip >> 1) & 0x01 == 0x01 : 0				# checking SSIP bit
+    (mip >> 3) & 0x01 == 0x01 : 0				# checking MSIP bit
+    (mip >> 3) & 0x01 == 0x00 : 0				# If a system has only one hart, or if a platform standard supports the delivery of machine-level interprocessor interrupts through 
+    								# external interrupts (MEI) instead
+    (mip >> 5) & 0x01 == 0x01 : 0				# STIP interrupt delegtion control is located in bit 5
+    (mip >> 7) & 0x01 == 0x01 : 0				# checking MTIP bit
+    (mip >> 9) & 0x1 == 0x01 : 0				# checking SEIP
+    (mip >> 11) & 0x01 == 0x01 : 0				# checking MEIP
+
+mcause:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	(mcause >> 8) & 0x01 == 0x01 : 0			# setting bit 8 allows user mode to be delegated to a lower privilege trap handler
+
+mcycle:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mcycle == 0x0 : 0					# where the value in mcycle register is 0.	
+
+minstret:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	minstret == 0x0 : 0					# where the value in minstret register is 0.
+
+mhpmcounter:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mhpmcounter3 == 0x0 : 0				# where the value in mhpmcounter3 register is 0.
+	mhpmcounter4 == 0x0 : 0				# where the value in mhpmcounter4 register is 0.
+	mhpmcounter31 == 0x0 : 0				# where the value in mhpmcounter31 register is 0.
+
+mhpmevent:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mhpmevent3 == 0x0 : 0					# where the value in mhpmevent3 register is 0.
+	mhpmevent20 == 0x0 : 0					# where the value in mhpmevent20 register is 0.
+	mhpmevent31 == 0x0 : 0					# where the value in mhpmevent31 register is 0.
+	
+mcounteren:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	(mcounteren >> 0) & (mcounteren >> 1) & (mcounteren >> 2) == 0x00 : 0 # When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the
+								# cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause
+								# an illegal instruction exception.
+	mcounteren & 0x00 == 0x01 : 0													
+	mcounteren & 0x07 == 0x00 : 0				# HPMn bit in the mcounteren register is clear
+	(mcounteren >> 1) & 0x01 == 0x01 : 0
+	(mcounteren >> 2) & 0x01 == 0x01 : 0
+	(mcounteren >> 3) & 0x01 == 0x01 : 0
+
+mcountinhibit:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	(mcountinhibit >> 0) & (mcountinhibit >> 2) == 0x00 : 0 # When the CY, IR bit in the mcountinhibit register is clear, the cycle, instret register increments as usual.
+	mcountinhibit & 0x03 == 0x00 : 0			# HPMn bit in the mcounteren register is clear
+	mcountinhibit & 0x00 == 0x01 : 0			# HPMn bit in the mcounteren register is clear
+	(mcountinhibit >> 2) & 0x01 == 0x01 : 0
+	(mcountinhibit >> 3) & 0x01 == 0x01 : 0
+
+mscratch:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mscratch == 0x0 : 0					# where the value in mscratch register is 0.
+	
+mepc:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mepc == 0 : 0						# where the value in mepc register is 0.
+	mepc & 0x03 == 0 : 0					# On implementations that support only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
+	
+mcause:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mcause >> (xlen-2) == 0x01 : 0			# to check if an interrupt comes	
+
+mtval:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+  	mtval == 0 : 0 					# mtval is either set to zero or written with exception-specific information to assist software in handling the trap. 
+
+mconfigptr:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+  	mconfigptr == 0 : 0 					# mconfigptr may be zero to indicate the configuration data structure does not exist or that an alternative mechanism must be used to 
+  									# locate it.
+
+menvcfg:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+  	 	menvcfg & 0x01 == 1 : 0 			# If bit FIOM (Fence of I/O implies Memory) is set to one in menvcfg, FENCE instructions executed
+		(menvcfg >> 62) & 0x01 == 1 : 0		# When PBMTE=1, Svpbmt is available for S-mode and G-stage address translation.
+
+# mseccfg csr bits are reserved for the forthcoming extensions
+    
+
+pmpcfg:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  csr_comb:
+    pmpcfg0 & 0x60 == 0 : 0			# Check if [6:5] WARL field is hardwired to zero always, for pmp0cfg0
+    pmpcfg0 & 0x80 == 0x80 : 0			# Check if lock bit is high for pmp0cfg0
+    (pmpcfg0 >> 8) & 0x80 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp1cfg0
+    (pmpcfg0 >> 8) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp1cfg0
+    (pmpcfg0 >> 16) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp2cfg0
+    (pmpcfg0 >> 16) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp2cfg0
+    (pmpcfg0 >> 24) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp3cfg0
+    (pmpcfg0 >> 24) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp3cfg0
+    pmpcfg1 & 0x60 == 0 : 0			# Check if [6:5] WARL field is hardwired to zero always, for pmp0cfg1
+    pmpcfg1 & 0x80 == 0x80 : 0			# Check if lock bit is high for pmp0cfg1
+    (pmpcfg1 >> 8) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp1cfg1
+    (pmpcfg1 >> 8) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp1cfg1
+    (pmpcfg1 >> 16) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp2cfg1
+    (pmpcfg1 >> 16) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp2cfg1
+    (pmpcfg1 >> 24) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp3cfg1
+    (pmpcfg1 >> 24) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp3cfg1
+    pmpcfg2 & 0x60 == 0 : 0			# Check if [6:5] WARL field is hardwired to zero always, for pmp0cfg2
+    pmpcfg2 & 0x80 == 0x80 : 0			# Check if lock bit is high for pmp0cfg2
+    (pmpcfg2 >> 8) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp1cfg2
+    (pmpcfg2 >> 8) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp1cfg2
+    (pmpcfg2 >> 16) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp2cfg2
+    (pmpcfg2 >> 16) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp2cfg2
+    (pmpcfg2 >> 24) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp3cfg2
+    (pmpcfg2 >> 24) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp3cfg2
+    pmpcfg3 & 0x60 == 0 : 0			# Check if [6:5] WARL field is hardwired to zero always, for pmp0cfg3
+    pmpcfg3 & 0x80 == 0x80 : 0			# Check if lock bit is high for pmp0cfg3
+    (pmpcfg3 >> 8) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp1cfg3
+    (pmpcfg3 >> 8) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp1cfg3
+    (pmpcfg3 >> 16) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp2cfg3
+    (pmpcfg3 >> 16) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp2cfg3
+    (pmpcfg3 >> 24) & 0x60 == 0 : 0		# Check if [6:5] WARL field is hardwired to zero always, for pmp3cfg3
+    (pmpcfg3 >> 24) & 0x80 == 0x80 : 0		# Check if lock bit is high for pmp3cfg3
+
+
+
+pmptor:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x08 : 0		# Check if we are in TOR mode
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0		# Check if R=1
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0		# Check if W=1
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0		# Check if X=1
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0		# Check if R=0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0		# Check if W=0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0		# Check if X=0
+
+pmpna4:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x10 : 0		# Check if we are in NA4 mode
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0		# Check if R=1
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0		# Check if W=1
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0		# Check if X=1
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0		# Check if R=0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0		# Check if W=0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0		# Check if X=0
+
+
+pmpnapot:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x18 : 0		# Check if we are in NAPOT Mode?
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0		# Check if R=1
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0		# Check if W=1
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0		# Check if X=1
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0		# Check if R=0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0		# Check if W=0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0		# Check if X=0
+
+misalign-lh:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  mnemonics:
+    lh: 0
+  val_comb:
+    'ea_align == 1': 0
+
+misalign-lhu:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    lhu: 0
+  val_comb:
+    'ea_align == 1': 0
+
+
+misalign-lw:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    lw: 0
+  val_comb:
+    'ea_align == 1': 0
+    'ea_align == 2': 0
+    'ea_align == 3': 0
+
+misalign-sh:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    sh: 0
+  val_comb:
+    'ea_align == 1': 0
+
+misalign-sw:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    sw: 0
+  val_comb:
+    'ea_align == 1': 0
+    'ea_align == 2': 0
+    'ea_align == 3': 0
+
+misalign2-jalr:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    jalr: 0
+  val_comb:
+    'imm_val%2 == 1 and ea_align == 2': 0
+
+
+misalign1-jalr:
+  config: 
+    - check ISA:=regex(.*I.*)
+  mnemonics:
+    jalr: 0
+  val_comb:
+    'imm_val%2 == 0 and ea_align == 1': 0
+
+
+misalign-jal:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    jal: 0
+  val_comb:
+    'ea_align == 2': 0
+
+misalign-bge:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bge: 0
+  val_comb:
+    ' rs1_val>rs2_val and ea_align == 2': 0
+
+misalign-bgeu:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bgeu: 0
+  val_comb:
+    ' rs1_val>rs2_val and ea_align == 2': 0
+
+misalign-blt:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    blt: 0
+  val_comb:
+    ' rs1_val<rs2_val and ea_align == 2': 0
+
+misalign-bltu:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bltu: 0
+  val_comb:
+    ' rs1_val<rs2_val and ea_align == 2': 0
+
+misalign-bne:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bne: 0
+  val_comb:
+    ' rs1_val!=rs2_val and ea_align == 2': 0
+
+misalign-beq:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    beq: 0
+  val_comb:
+    ' rs1_val==rs2_val and ea_align == 2': 0
