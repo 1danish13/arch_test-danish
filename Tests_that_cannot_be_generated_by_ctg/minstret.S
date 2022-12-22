@@ -2,9 +2,7 @@
 // Copyright (c) 2020. RISC-V International. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause
 // -----------
-//
-//
-// The events are IMP DEF,
+
 
 #define rvtest_strap_routine
 #include "model_test.h"
@@ -17,7 +15,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)		//CSR-access
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",minstret)		//CSR-access
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,41 +24,38 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-//    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 1)
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// With both values of mcountinhibit.IR, architecturally execute:
+// ecall
+// ebreak
+// wfi which traps
+// wfi which sleeps
+// trapping load/store instructions
 
-	csrr a4, minstret	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	ecall
-	csrr a4, minstret	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+// Test minstret CSR with mcountinhibit = 0
+	li a0, 0         		// Load 0 into a0
+	csrs mstatus, a0   		// Set mcountinhibit = 0 in mstatus, when mcountinhibit is set to 0, the minstret CSR is incremented
 
-
+	ecall				// Execute ecall and ebreak instructions
 	ebreak
-	csrr a4, minstret	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+	csrr a0, minstret			
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,a0)
+
+
+// Test minstret CSR with mcountinhibit = 1
+	li a0, 1         		// Load 1 into a0
+	csrs mstatus, a0   		// Set mcountinhibit = 1 in mstatus, When mcountinhibit is set to 1, the minstret CSR is not incremented.
 	
-	WFI
-	csrr a4, minstret	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	sw t1, 0(t0) 			// exception # 2 read a word from addr 0x1
-	csrr a1, minstret
-	RVTEST_SIGUPD(x13, a1)		// We should get 7 in mcause because of store access fault
-	nop
-	
-	lw t1, 3(t0)
-	csrr a1, minstret
-	RVTEST_SIGUPD(x13, a1)		// We should get 4 in mcause because of load address misalligned
-	nop
+
+// Execute trapping load and store instructions
+	li a0, 0x1000    		// Load address into a0
+	lw a1, 0(a0)      		// Load word from memory at address in a0
+	sw a1, 0(a0)      		// Store word in memory at address in a0
+	csrr a0, minstret			
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,a0)
 	
 
 #endif

@@ -4,7 +4,7 @@
 // -----------
 //
 //
-// Cause each type of trap taken to M mode, make sure the mcause is correct.
+
 #define rvtest_strap_routine
 #include "model_test.h"
 #include "arch_test.h"
@@ -16,7 +16,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mcause)
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -25,86 +25,69 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 100)
-/////////////////// TEST 01 ////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// Cause each type of trap taken to M mode, make sure the mcause is correct.
 
-	csrr a4, mcause		// reading the value of mcause on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	nop
-//all the value of csr is 0 at reset
 
-	csrw mcause, a5
-	nop				// nop in case of trap
+	
+// cause an instruction address misaligned trap
+	addi t0, x0, 1
+	ecall
 	csrr a1, mcause
 	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
 	nop
 
- 	// Illegal CSRs should error on read or write
- 	csrr x0, 6
- 	csrrw t1, 6, x0
+// cause an instruction access fault trap
+	li t0, 0xffffffff
+	lw t0, 0(t0)
 	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 2 in the mcause which is illegal instruction
-	nop	
-
-	//All counters should not be writeable
- 	csrrwi t1, 0xC00, 0 # cycle
- 	nop
- 	csrrwi t1, 0xC02, 0 # instret
- 	nop
- 	csrrwi t1, 0xC80, 0 # cycleh
- 	nop
- 	csrrwi t1, 0xC82, 0 # instreth
- 	nop
- 	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 2 in the mcause which is illegal instruction becaue all counters should not be writeable
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
 	nop
 
-	lw t1, 0(t0) 			// exception # 2 read a word from addr 0x1
-	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 5 in mcause because of Load access fault
-	nop
-	
-	sw t1, 0(t0) 			// exception # 2 read a word from addr 0x1
-	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 7 in mcause because of store access fault
-	nop
-	
-	lw t1, 3(t0)
-	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 4 in mcause because of load address misalligned
-	nop
-	
-	sw t1, 3(t0)
-	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 4 in mcause because of load address misalligned
-	nop
-	
+// cause an illegal instruction trap
+	li t0, 0
 	ecall
-	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get b in mcause because of envirnment call from M mode
-	nop
-	
+
+// cause a breakpoint trap
 	ebreak
 	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 3 in mcause because of breakpoint
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
 	nop
 
-
-	la t0, label
-	addi t1, t0, 1
-	jalr x0, 0(t1)
-	//beq x0, x0, label
+// cause a load address misaligned trap
+	addi t0, x0, 1
+	lw t0, 0(t0)
 	csrr a1, mcause
-	RVTEST_SIGUPD(x13, a1)		// We should get 0 in mcause because of instruction address misaligned
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
 	nop
-label:
+
+// cause a load access fault trap
+	li t0, 0xffffffff
+	lw t0, 0(t0)
+	csrr a1, mcause
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
 	nop
-	
+
+// cause a store/AMO address misaligned trap
+	addi t0, x0, 1
+	sw t0, 0(t0)
+	csrr a1, mcause
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
+	nop
+
+// cause a store/AMO access fault trap
+	li t0, 0xffffffff
+	sw t0, 0(t0)
+	csrr a1, mcause
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
+	nop
+
+// cause an environment call from U-mode trap
+	ecall
+	csrr a1, mcause
+	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
+	nop
 
 	
 /////////////////// Switch to S-mode ////////////////////////////////////////////
@@ -155,7 +138,7 @@ label:
 	RVTEST_SIGUPD(x13, a1)		// We should get 8 in mcause because of envirnment call from U mode
 	nop
 	
-	
+
 #endif
 
  # ---------------------------------------------------------------------------------------------

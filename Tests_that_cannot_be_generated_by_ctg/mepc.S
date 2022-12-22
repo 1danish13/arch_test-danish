@@ -4,7 +4,7 @@
 // -----------
 //
 //
-// Cause each type of trap taken to M mode, store mepc to the signature
+
 
 #define rvtest_strap_routine
 #include "model_test.h"
@@ -17,7 +17,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mepc)
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -25,70 +25,49 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	
 	.attribute stack_align, 16
   	.align	2    
+  	
+  	
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 100)
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// Cause each type of trap taken to M mode, store mepc to the signature
 
-	csrr a4, mepc			// reading the value of mtval on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file, all zero's in the signature
-	nop
-
-	csrw mepc, a5
-	nop				// nop in case of trap
-	csrr a1, mepc
-	RVTEST_SIGUPD(x13, a1)		
-	nop
-
- 	csrr x0, 6			// Illegal instruction
- 	csrrw t1, 6, x0
+	ecall   			//execute the ecall instruction to trigger an environment call trap
 	csrr a1, mepc
 	RVTEST_SIGUPD(x13, a1)		
 	nop	
+	
 
-	lw t1, 0(t0) 			// exception # 2 read a word from addr 0x1
+	ebreak   			// execute the ebreak instruction to trigger an ebreak trap
 	csrr a1, mepc
 	RVTEST_SIGUPD(x13, a1)		
 	nop
 	
-	sw t1, 0(t0) 			// exception # 2 read a word from addr 0x1
+// load the address of the misaligned instruction into register a0
+	li a1, 0x12345678		// loads the hexadecimal value 0x12345678 into register a1
+	lui a0, %hi(0x12345678)	// lui instruction to load the upper 20 bits of the address into register a0
+	addi a0, a0, %lo(0x12345678)	// addi instruction to add the lower 12 bits of the address to a0.
 	csrr a1, mepc
 	RVTEST_SIGUPD(x13, a1)		
 	nop
 	
-	lw t1, 3(t0)
-	csrr a1, mepc
-	RVTEST_SIGUPD(x13, a1)		//load address misalligned
-	nop
 	
-	sw t1, 3(t0)
-	csrr a1, mepc
-	RVTEST_SIGUPD(x13, a1)		// store address misalligned
-	nop	
-	
-	ebreak
-	csrr a1, mepc
-	RVTEST_SIGUPD(x13, a1)		// breakpoint
-	nop
-	
-	ecall
-	csrr a1, mepc
-	RVTEST_SIGUPD(x13, a1)		// envirnment call from M mode
-	nop
- /*
-	la t0, label			// instruction access fault
-	addi t1, t0, 1
-	jalr x0, 0(t1)
-	//beq x0, x0, label
+	lw a0, 0(a0)   		// attempt to load from the non-readable memory location to trigger an access fault trap
 	csrr a1, mepc
 	RVTEST_SIGUPD(x13, a1)		
 	nop
-label:
+	
+	sw x0, 0(a0)   		// attempt to store to the non-writable memory location to trigger a page fault trap
+	csrr a1, mepc
+	RVTEST_SIGUPD(x13, a1)		
 	nop
-*/
+	
+	li a0, 0x12345678		// load the hexadecimal value 0x12345678 into register a0 
+	ori a0, a0, 0xffffffff		// "or immediate" (ori) instruction to set all 32 bits of a0 to 1. the ori instruction is a valid opcode and will be executed without issue. However, some processors may treat the instruction as illegal if the immediate value being ORed with the register is too large. In this case, the processor may raise an illegal instruction trap when it encounters the ori instruction.
+	csrr a1, mepc
+	RVTEST_SIGUPD(x13, a1)		
+	nop
+
 
 #endif
 

@@ -2,12 +2,14 @@
 // Copyright (c) 2020. RISC-V International. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause
 // -----------
+//
+//
 
 
 #define rvtest_strap_routine
 #include "model_test.h"
 #include "arch_test.h"
-RVTEST_ISA("RV32I")		//32 test
+RVTEST_ISA("RV32I")
 # Test code region
 .section .text.init
 .globl rvtest_entry_point
@@ -15,7 +17,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mie)		//CSR-access
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mtvec_direct)
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -24,23 +26,34 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	
+
 ///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
-// for mie register Make sure that the appropriate mie bit is used in enabling interrupts for each mode
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 02 /////////////////////////////////////////////////////////////////////////////
+// Cause each type of trap (exception and interrupt) in direct mode for each privilege level.
 
 
-	li a0, 0			
-	csrw mie,a0			// set the MIE register to a known value
-	li a0, 1			// enable interrupts for each mode
+	li     t0, 0				// Set the mtvec CSR to direct mode
+	csrw   mtvec, t0
+
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an interrupt
+	csrr   t0, mip
+	li t1, 8				// Set the pending bit for the machine timer interrupt in the MIP register
+	or t0, t0, t1
+	csrw   mip, t0
 	
-	slli a0, a0, 3
-	csrr t0, mie
-	or t0, t0, a0			// Enable interrupts for each mode (User, Supervisor, Machine) by setting the appropriate MIE bit using the or instruction.
-	csrw mie, t0
-	csrr t0, mie			// Check that the MIE register has been updated correctly for each mode by reading the value using the lw instruction and comparing it to the expected value.
-	nop				// Added nop in case of trap
-	RVTEST_SIGUPD(x13,t0)
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an exception
+	li t0, 5				// Causing a load access fault
+	csrr	t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop	
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////// Switch to S-mode //////////////////////////////////////////////////////////////////////
@@ -56,17 +69,32 @@ main:
 	LI(a5, PMP_L| PMP_R| PMP_W | PMP_X | PMP_TOR)		// LOCKED BIT IS SET
 	csrw pmpcfg0, a5
 	RVTEST_GOTO_LOWER_MODE	Smode	// GO into S mode	
-///////////////////////////////////////////////////////////////////////////////////////////////// Repeating TEST 01 /////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// Repeating TEST 02 /////////////////////////////////////////////////////////////////////////////
 // IN S mode now
-	li a0, 0			
-	csrw mie,a0			// set the MIE register to a known value
-	li a0, 1			// enable interrupts for each mode
 	
-	slli a0, a0, 3
-	csrr t0, mie
-	or t0, t0, a0			// Enable interrupts for each mode (User, Supervisor, Machine) by setting the appropriate MIE bit using the or instruction.
-	csrw mie, t0
-	csrr t0, mie			// Check that the MIE register has been updated correctly for each mode by reading the value using the lw instruction and comparing it to the expected value.	
+	
+	li     t0, 0b00			// Set the mtvec CSR to direct mode
+	csrw   mtvec, t0
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an interrupt
+	csrr   t0, mip
+	li t1, 8
+	or t0, t0, t1
+	csrw   mip, t0
+	
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an exception
+	li t0, 5				// Causing a load access fault
+	csrr	t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop	
+	
 	
 ///////////////////////////////////////////////////////////////////////////////////////////// Switch back to M-mode //////////////////////////////////////////////////////////////////////
 	RVTEST_GOTO_MMODE
@@ -88,18 +116,33 @@ main:
 	csrw pmpcfg0, a5
 	
 	RVTEST_GOTO_LOWER_MODE	Umode	
-///////////////////////////////////////////////////////////////////////////////////////////////// Repeating TEST 01 /////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// Repeating TEST 02 /////////////////////////////////////////////////////////////////////////////
 // IN U-mode now
 
-	li a0, 0			
-	csrw mie,a0			// set the MIE register to a known value
-	li a0, 1			// enable interrupts for each mode
+	li     t0, 0b00			// Set the mtvec CSR to direct mode
+	csrw   mtvec, t0
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an interrupt
+	csrr   t0, mip
+	li t1, 8
+	or t0, t0, t1
+	csrw   mip, t0
 	
-	slli a0, a0, 3
-	csrr t0, mie
-	or t0, t0, a0			// Enable interrupts for each mode (User, Supervisor, Machine) by setting the appropriate MIE bit using the or instruction.
-	csrw mie, t0
-	csrr t0, mie			// Check that the MIE register has been updated correctly for each mode by reading the value using the lw instruction and comparing it to the expected value.
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
+
+// Cause an exception
+	li t0, 5				// Causing a load access fault
+	csrr	t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop	
+
+
+
 
 #endif
 

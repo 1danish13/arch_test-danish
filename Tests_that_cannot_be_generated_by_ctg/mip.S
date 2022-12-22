@@ -7,6 +7,7 @@
 // 
 
 #define rvtest_strap_routine
+#define input_wire 0x717
 #include "model_test.h"
 #include "arch_test.h"
 RVTEST_ISA("RV32I")		//32 test
@@ -17,7 +18,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)		//CSR-access
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mip)		//CSR-access
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,44 +27,77 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-//    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-//////////////////////////////////Test1//////////////////////////////////////////////////
-//Readability/writability of the input wire state
 
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+//In mip for each bit check Readability/writability of the input wire state
+	
+	li t0, 0x00000001		// Initialize mip register
+	csrw mip, t0
 
-	csrr a4, mip	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrw mip, a5
-	csrr a1, mip
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
-	
-	csrw mip, x0
-	csrr a1, mip
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
-	
-//////////////////////////////////Test2//////////////////////////////////////////////////
-//Readability/writability of the flop
-	csrr a4, mip	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrw mip, a5
-	csrr a1, mip
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
-	
-//////////////////////////////////Test3//////////////////////////////////////////////////
-//Hit this case: https://github.com/riscv/riscv-isa-manual/issues/671
+	li t1, 0x00000000		// Set input wire to known state (0 in this example)
+	csrw input_wire, t1
+	csrr t2, mip			// Read mip register and verify input wire state
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t2)
+ 
+	li t3, 0x00000001		// Modify input wire state and verify writability of mip register
+	csrw input_wire, t3
+	csrr t4, mip
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t4)
 
-///This issue is resolved on the github
 	
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 02 /////////////////////////////////////////////////////////////////////////////
+// test for mip register for each bit check Readability/writability of the flop
+
+	li a0, 1			// load the value 1 into the MIP register
+	csrr t0, mip
+	addi t0, a0, 0
+	csrr t0, mip			// check that the value of the MIP register can be read correctly
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
+
+// modify the value of the MIP register by setting the least significant bit to 0
+	li a0, 0			
+	srli a0, a0, 1
+	csrr t0, mip
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
+	or t0, t0, a0
+	csrw mip, t0
+
+// check that the value of the MIP register has been updated correctly
+	csrr t0, mip
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
+
+	
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 03 /////////////////////////////////////////////////////////////////////////////
+// test for mip register Taking SSI immediately after mip write
+
+// set the SSI enable bit in the MIP register
+	li a0, 1
+	slli a0, a0, 3
+	csrr t0, mip
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
+	or t0, t0, a0
+	csrw mip, t0
+
+// write a value to the MIP register that causes an SSI to be taken
+	li a0, 1
+	slli a0, a0, 11
+	csrr t0, mip
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
+	or t0, t0, a0
+	csrw mip, t0
+
+// check that the SSI is taken immediately after the write to the MIP register
+	csrr t0, mepc
+	nop				// Added nop in case of trap
+	RVTEST_SIGUPD(x13,t0)
 	
 
 #endif

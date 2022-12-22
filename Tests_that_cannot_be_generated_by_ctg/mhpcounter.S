@@ -4,7 +4,8 @@
 // -----------
 //
 //
-// The events are IMP DEF,
+// In mhpcounter the events are IMP DEF,
+// In mhpevent the events are IMP DEF, and event 0 is defined to mean no event
 
 #define rvtest_strap_routine
 #include "model_test.h"
@@ -17,7 +18,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)		//CSR-access
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mhpcounter)		//CSR-access
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,137 +27,14 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-//    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 1)
 
-	csrr a4, mhpmcounter3		
+	csrr a4, mhpmcounter3		// Read counter register 3	
 	nop				// nop in case of trap
 	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-//	add t0, x5, x0
-	csrw mhpmcounter4, a5		// writing all 1's in mhpmcoutner4 to see if the mhpmevent4 tells which event causes mhpmcounter4 to increment
-	nop
-	csrr a4, mhpmevent4		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter4		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter5		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter6		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter7		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter8		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter9		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter10		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter11		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter12		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter13		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter14		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter15		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter16		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter17		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter18		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter19		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter20		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter21		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter22		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter23		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter24		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter25		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter26		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter27		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter28		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter29		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter30		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrr a4, mhpmcounter31		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	
 
+	csrr a4, mhpmcounter4		// Read counter register 4	
+	nop				// nop in case of trap
+	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
 
 #endif
 

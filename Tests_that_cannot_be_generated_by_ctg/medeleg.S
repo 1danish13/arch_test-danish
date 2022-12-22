@@ -3,8 +3,7 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // -----------
 //
-//in medeleg Delegate the exception to {M, S} mode.  Cause the exception in each mode.
-
+//
 
 #define rvtest_strap_routine
 #include "model_test.h"
@@ -17,7 +16,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",medeleg)
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,32 +25,25 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 100)
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// In medeleg Delegate the exception to {M, S} mode.  Cause the exception in each mode.
 
 
-	csrr a4, medeleg		// reading the value of medeleg on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+// Set the delegate bit in the MEDELEG register to enable the instruction address misaligned exception in M mode
+	csrr   t0, medeleg
+	RVTEST_SIGUPD(x13, t0)			// Putting updated value in signature file
+	nop
+	li t1, 1			// Exception number 0: Instruction address misaligned
+	or t0, t0, t1
+	csrw   medeleg, t0
+	csrr   t0, medeleg
+	RVTEST_SIGUPD(x13, t0)			// Putting updated value in signature file
 	nop
 
 
- 	csrr x0, 6			// Illegal instruction exception
- 	csrrw t1, 6, x0
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop	
+///////////////////////////////////////////////////////////////////////////////////////////// Switch to S-mode //////////////////////////////////////////////////////////////////////
 
-
-	lw t1, 0(t0) 			// load access fault
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop
-	
-/////////////////// Switch to S-mode ////////////////////////////////////////////
 	csrw satp, zero                // Disable address translation.
 	LI(t2, -1)
 	csrw pmpaddr0, t2		// Updated pmpaddr0 to define PMP region consisting
@@ -63,69 +55,22 @@ main:
 	LI(a5, PMP_L| PMP_R| PMP_W | PMP_X | PMP_TOR)		// LOCKED BIT IS SET
 	csrw pmpcfg0, a5
 	RVTEST_GOTO_LOWER_MODE	Smode	// GO into S mode	
-// REPEATING THE SAME TEST //////////////////////////////////////////		
+///////////////////////////////////////////////////////////////////////////////////////////////// Repeating TEST 01 /////////////////////////////////////////////////////////////////////////////
 // IN S mode now
-/////////////////// TEST 01 ////////////////////////////////////////////
 
 
-	csrr a4, medeleg		// reading the value of medeleg on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+// Set the delegate bit in the SEDELEG register to enable the instruction address misaligned exception in S mode
+	csrr   t0, sedeleg
+	RVTEST_SIGUPD(x13, t0)			// Putting updated value in signature file
+	nop
+	li t1, 1			// Exception number 0: Instruction address misaligned
+	or t0, t0, t1
+	csrw   sedeleg, t0
+	csrr   t0, sedeleg
+	RVTEST_SIGUPD(x13, t0)			// Putting updated value in signature file
 	nop
 
-
- 	csrr x0, 6			// Illegal instruction exception
- 	csrrw t1, 6, x0
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop	
-
-
-	lw t1, 0(t0) 			// load access fault
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop
-	
-/////////////////// Switch back to M-mode ////////////////////////////////////////////
-	RVTEST_GOTO_MMODE
-
-  	csrr a4, mstatus		// VERIFICATION of M-mode
-	nop				// Added nop in case of trap
-	RVTEST_SIGUPD(x13,a4)
-/////////////////// Switch to U-mode ////////////////////////////////////////////
-	csrw satp, zero                 // Disable address translation.
-	LI(t2, -1)
-	csrw pmpaddr0, t2		// Updated pmpaddr0 to define PMP region consisting
-					// of whole physical memory
-	csrr t0, pmpaddr0		// Verify its value by reading back
-	nop				// Added nop in case of trap
-	RVTEST_SIGUPD(x13,t0)
-	nop				// Added nop in case of trap
-	LI(a5, PMP_L| PMP_R| PMP_W | PMP_X | PMP_TOR)		// LOCKED BIT IS SET
-	csrw pmpcfg0, a5
-	
-	RVTEST_GOTO_LOWER_MODE	Umode	
-// REPEATING THE SAME TEST //////////////////////////////////////////		
-// IN U-mode now
-/////////////////// TEST 01 ////////////////////////////////////////////
-
-	csrr a4, medeleg		// reading the value of medeleg on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	nop
-
-
- 	csrr x0, 6			// Illegal instruction exception
- 	csrrw t1, 6, x0
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop	
-
-
-	lw t1, 0(t0) 			// load access fault
-	csrr a1, medeleg
-	RVTEST_SIGUPD(x13, a1)		
-	nop
+	sret				// Cause the instruction address misaligned exception in S mode
 
 #endif
 

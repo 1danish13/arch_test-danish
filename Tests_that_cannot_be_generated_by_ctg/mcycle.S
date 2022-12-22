@@ -17,7 +17,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)		//CSR-access
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True", mcycle)		//CSR-access
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,64 +26,23 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-//    	LI(x2, 0x80001000)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 1)
-
-
-	csrw mcycle, a5
-	nop
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// Test that mcycle value increments
 	
-	add t0, x5, x0
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file	
-	
-	addi t0, x5, 3
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file	
-	
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrrw t1, 6, x5		
-	csrr a4, mcycle
-	RVTEST_SIGUPD(x13, a4)		// We should get 2 in the mcause which is illegal instruction
-	nop
-	
-/*	
-	csrw mcycle, a5
-	nop
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-	csrw mcycle, a5
-	nop
-	csrr a4, mcycle		
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-
-*/
-
-
-/*
-	add t0, x5, mcycle		// testing if the mcycle value increments  
+// perform some operation that takes a non-zero amount of time
 	csrr a4, mcycle
 	RVTEST_SIGUPD(x13, a4)		
 	nop
-	addi t0, mcycle, 1
+// perform some operation that takes a non-zero amount of time
+	addi a0, x0, 100 		//perform 100 iterations of a loop
+	loop:
+	  addi a0, a0, -1
+	  bnez a0, loop
+
 	csrr a4, mcycle
 	RVTEST_SIGUPD(x13, a4)		
 	nop
-*/	
 
 #endif
 

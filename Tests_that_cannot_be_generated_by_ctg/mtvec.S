@@ -17,7 +17,7 @@ rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 #ifdef TEST_CASE_1
-    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",CSR-access)
+    RVTEST_CASE(1,"//check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); def rvtest_mtrap_routine=True; def TEST_CASE_1=True",mtvec)
 RVTEST_SIGBASE( x13,signature_x13_1)
 	.option nopic
 	.attribute unaligned_access, 0
@@ -26,69 +26,33 @@ RVTEST_SIGBASE( x13,signature_x13_1)
 	.attribute stack_align, 16
   	.align	2    
 main: 
-	LI(x1,0)
-    	LI(a5,-1)		// ALL 1's
-    	LI(a2, 0x80001002)	// Any random value to check if previous value gets updated or not.
-// IN M-mode (Default)
-	LI(x5, 100)
-/////////////////// TEST 01 ////////////////////////////////////////////
 
-	csrr a4, mtvec			// reading the value of mtvec on reset
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
+///////////////////////////////////////////////////////////////////////////////////////////// IN M-mode (Default) //////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////// TEST 01 /////////////////////////////////////////////////////////////////////////////
+// Cause each type of trap (exception and interrupt) in vectored mode.
+
+	li     t0, 0b01		// Set the mtvec CSR to vectored mode
+	csrw   mtvec, t0
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
 	nop
 
+// Cause an interrupt
+	csrr   t0, mip
+	li t1, 8
+	or t0, t0, t1
+	csrw   mip, t0
 
-/*
+	csrr    t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
+	nop
 
-// 	Cause each type of trap (exception and interrupt) in direct mode.
- 	csrr x0, 6			// Illegal instruction exception
- 	csrrw t1, 6, x0
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)		
-	nop	
-
-
-	lw t1, 0(t0) 			// load access fault
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)		
+// Cause an exception
+	li t0, 5			// Causing a load access fault
+	csrr	t1, mtvec    			
+	RVTEST_SIGUPD(x13, t1)			// Putting updated value in signature file
 	nop
 	
-	sw t1, 0(t0) 			// store access fault
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)		
-	nop
-	
-	ebreak				//ebreak
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)							
-	nop
-	
-	WFI				//wait for interrupt, since we cannot produce interrupt ourself
-	csrr a4, mtvec	
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a4)		// Putting updated value in signature file
-	
-*/	
-
-	//testing in the vectored mode
-	
-//	csrw mtvec, a2
-	nop				// nop in case of trap
-	RVTEST_SIGUPD(x13, a1)		// Putting updated value in signature file
-	nop	
-	
-	csrr x0, 6			// Illegal instruction exception
- 	csrrw t1, 6, x0
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)		
-	nop	
-
-
-	lw t1, 0(t0) 			// load access fault
-	csrr a1, mtvec
-	RVTEST_SIGUPD(x13, a1)		
-	nop
 	
 
 #endif
