@@ -1,7 +1,3 @@
-#####################################################################################################################################################################################
-# These coverpoints belongs to the test plan for RISC-V Privilege Arch Compliance developed by 10xEngineers
-#####################################################################################################################################################################################
-
 ecall:
   config: 
     - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
@@ -13,595 +9,389 @@ ebreak:
     - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
   mnemonics: 
     ebreak: 0
-
-#####################################################################################################################################################################################
      
-misa:
+misa_check_combination:
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*F.*D); 
+    - check ISA:=regex(.*I.*Zicsr.*F.*D); 
   mnemonics:
      - csrrw
   csr_comb:
-	(misa & 0x08) | (misa & 0x20) == 0 : 0		# setting “F”=0 and “D”=1 should results in both “F” and “D” being cleared.
+    (misa & 0x08) | (misa & 0x20) == 0 : 0			# setting “F”=0 and “D”=1 should results in both “F” and “D” being cleared.
   val_comb:
-	rs1val & (0x08) == 0x08 and (imm_val == 0x301): 0	# checks if the third bit of rs1val is set to 1 and if imm_val is equal to 0x301. If these conditions are both true, the coverpoint will have a value of 0.	
-
+     rs1val & (0x08) == 0x08 and (imm_val == 0x301): 0
 
 misa_mxl_check_32:
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*RV32.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	misa >> (xlen-2) == 0x01 : 0				# checks whether the mxl field of misa register is 1.
-    
+    misa >> (xlen-2) == 0x01 : 0				# A coverpoint which checks whether the mxl field of misa register is 1.
     
 misa_mxl_check_64:
   config: 
-    - check ISA:=regex(.*64.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*RV64.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	misa >> (xlen-2) == 0x02 : 0				# checks whether the mxl field of misa register is 2.
-    
+    misa >> (xlen-2) == 0x02 : 0				# A coverpoint which checks whether the mxl field of misa register is 2.
     
 misa_mxl_check_128:
   config: 
-    - check ISA:=regex(.*128.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*RV128.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	misa >> (xlen-2) == 0x03 : 0				# checks whether the mxl field of misa register is 3.
-
-#####################################################################################################################################################################################
-
-mstatus:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	mstatus & 0x1 == 0x1 : 0 				# checks whether machine-mode interrupts are enabled or disabled.
-	mstatus & 0x2 == 0x2 : 0 				# checks whether machine-mode memory access protection is enabled or disabled.
-	mstatus & 0x4 == 0x4 : 0 				# checks whether machine-mode floating point exceptions are enabled or disabled.
-	mstatus & 0x40 == 0x40 : 0 				# checks whether machine-mode previous privilege mode is set to machine mode.
-	mstatus & 0x80 == 0x80 : 0 				# checks whether machine-mode previous interrupt enable is set to enabled.
-	mstatus & 0x100 == 0x100 : 0 				# checks whether machine-mode previous interrupt enable is set to disabled.
-	mstatus & 0x200 == 0x200 : 0				# checks whether machine-mode previous floating point enable is set to enabled.
-	mstatus & 0x400 == 0x400 : 0				# checks whether machine-mode previous floating point enable is set to disabled.
-	mstatus & 0x800 == 0x800 : 0				# checks whether machine-mode previous timer interrupt pending is set to pending.
-	mstatus & 0x1000 == 0x1000 : 0			# checks whether machine-mode previous timer interrupt pending is set to not pending.
-	mstatus & 0x2000 == 0x2000 : 0			# checks whether machine-mode previous external interrupt pending is set to pending.
-	mstatus & 0x4000 == 0x4000 : 0			# checks whether machine-mode previous external interrupt pending is set to not pending.
-	mstatus & 0x8000 == 0x8000 : 0			# checks whether machine-mode previous virtual memory enabled is set to enabled.
-	mstatus & 0x10000 == 0x10000 : 0			# checks whether machine-mode previous virtual memory enabled is set to disabled.
-	mstatus & 0x20000 == 0x20000 : 0			# checks whether machine-mode previous floating point enabled is set to enabled.
-	mstatus & 0x40000 == 0x40000 : 0			# checks whether machine-mode previous floating point enabled is set to disabled.
-	mstatus & 0x80000 == 0x80000 : 0			# checks whether machine-mode previous floating point traps are enabled or disabled.
-	mstatus & 0x100000 == 0x100000 : 0			# checks whether machine-mode previous floating point underflow traps are enabled or disabled.
-	mstatus & 0x200000 == 0x200000 : 0			# checks whether machine-mode previous floating point overflow traps are enabled or disabled.
-	mstatus & 0x400000 == 0x400000 : 0			# checks whether machine-mode previous floating point invalid operation traps are enabled or disabled.
-	mstatus & 0x800000 == 0x800000 : 0			# checks whether machine-mode previous floating point division by zero traps are enabled or disabled.
-	(mstatus >> (xlen-1)) & (mstatus >> (xlen-2)) & (mstatus >> (xlen-3)) == 0		# If all of these bits are set to 1, the coverpoint will evaluate to 0, indicating that the processor is in supervisor mode with memory access protection and floating point exceptions enabled
+    misa >> (xlen-2) == 0x03 : 0				# A coverpoint which checks whether the mxl field of misa register is 3.
 
 mstatus_Smode:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*);
+    - check ISA:=regex(.*I.*Zicsr.*S.*RV32.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mstatus >> 1) & 0x01 == 0x01 : 0			# checks if the SIE gets enabled
-	(mstatus >> 5) & 0x01 == 0x01 : 0 			# checks SPIE bit 
-	(mstatus >> 8) & 0x01 == 0x01 : 0 			# checks SPP bit
-	(mstatus >> 22) & 0x1 == 0x01 : 0 			# When TSR=1, attempts to execute SRET while executing in S-mode will raise an illegal instruction exception.  
-	(mstatus >> 10) & 0x3 == 0x01 : 0			# MPP fields to check if privilege mode is S
-	(mstatus >> 18) & 0x1 == 0x01 : 0 			# checks when SUM=1, accesses to pages that are accessible by U-mode are permitted.
-	mstatus & 0x20 == 0x20 : 0 				# checks whether machine-mode previous privilege mode is set to supervisor mode.
-	mstatus & 0x8 == 0x8 : 0 				# checks whether machine-mode supervisor mode is enabled or disabled.
-	
+    (mstatus >> 1) & 0x01 == 0x01 : 0				# checking if the SIE gets enabled
+    (mstatus >> 5) & 0x01 == 0x01 : 0 			# checking SPIE bit 
+    (mstatus >> 8) & 0x01 == 0x01 : 0 			# checking SPP bit
+    (mstatus >> 22) & 0x1 == 0x01 : 0 			# When TSR=1, attempts to execute SRET while executing in S-mode will raise an illegal instruction exception.  
+    (mstatus >> 10) & 0x3 == 0x01 : 0				# MPP fields to check if privilege mode is S
+    (mstatus >> 18) & 0x1 == 0x01 : 0 			# check When SUM=1.  accesses to pages that are accessible by U-mode are permitted.
+        
+mstatus_Smode_32_big_endian:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*RV32.*S.*); check big_endian_support=True; 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatush >> 4) & 0x1 == 0x01 : 0 			# check SBE = 1, it controls whether explicit load and store memory accesses made from S-mode is big-endian  									# value, gets the value corresponding to the widest supported width not wider than the new MXLEN.    
+mstatus_Smode_64_big_endian:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*RV64.*S.*); check big_endian_support=True; 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 36) & 0x1 == 0x01 : 0 			# check SBE = 1, it controls whether explicit load and store memory accesses made from S-mode is big-endian  									# value, gets the value corresponding to the widest supported width not wider than the new MXLEN.
+mstatus_Mmode:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 3) & 0x01 == 0x01 : 0 			# checking if the MIE gets enabled
+    (mstatus >> 7) & 0x01 == 0x01 : 0 			# MPIE holds the value of the interrupt-enable bit active prior to the trap, checking whether it does that or not
+    (mstatus >> 10) & 0x3 == 0x3 : 0				# MPP fields to check if privilege mode is M
+    (mstatus >> 17) & 0x1 == 0x01 : 0 			# checking MPRV, When MPRV=1, load and store memory addresses are translated and protected, and endianness is applied
+    (mstatus >> 19) & 0x1 == 0x01 : 0 			# check when MXR == 1    
+    (mstatus >> 20) & 0x1 == 0x01 : 0 			# check when TVM = 1.
+    (mstatus >> 21) & 0x1 == 0x01 : 0 			# check when TW = 1.    
+    
+mstatus_Mmode_32_big_endian:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*RV32.*); check big_endian_support=True; 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatush >> 5) & 0x1 == 0x01 : 0 			# check MBE = 1, it controls whether explicit load and store memory accesses made from M-mode is big-endian  									# value, gets the value corresponding to the widest supported width not wider than the new MXLEN.
+  
+mstatus_Smode_64_big_endian:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*RV64.*); check big_endian_support=True; 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 37) & 0x1 == 0x01 : 0 			# check MBE = 1, it controls whether explicit load and store memory accesses made from M-mode is big-endian  									# value, gets the value corresponding to the widest supported width not wider than the new MXLEN.
+
 mstatus_Umode:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*U.*);
+    - check ISA:=regex(.*I.*Zicsr.*U.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mstatus & 0x10 == 0x10 : 0 				# checks whether machine-mode previous privilege mode is set to user mode.
-	
-	
-mstatush:    
+    (mstatus >> 6) & 0x1 == 0x01 : 0 				# check UBE = 1, it controls whether explicit load and store memory accesses made from U-mode is big-endian
+    (mstatus >> 10) & 0x3 == 0x0 : 0				# MPP fields to check if privilege mode is U 
+
+mstatus_Umode_64:    
   config: 
-    - check ISA:=regex(.*64.*); check ISA:=regex(.*I.*Zicsr.*);
+    - check ISA:=regex(.*I.*Zicsr.*U.*RV64.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mstatush >> 5) & 0x1 == 0x01 : 0			# checks if machine-mode byte enable (MBE) is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that MBE is enabled
-	(mstatush >> 6) & 0x1 == 0x01 : 0			# checks if machine-mode user byte enable (UBE) is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that UBE is enabled
-	(mstatush >> 7) & 0x1 == 0x01 : 0			# checks if machine-mode supervisor timer interrupt enable is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that supervisor timer interrupt enable is enabled
-	(mstatush >> 8) & 0x1 == 0x01 : 0			# checks if machine-mode previous supervisor timer interrupt enable is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that previous supervisor timer interrupt enable is enabled
+    (mstatus >> 32) & 0x3 == 0x3 : 0				# checking UXL bits, If MXLEN is changed from 32 to a wider width, each of mstatus fields SXL and UXL, if not restricted to a single 
 
-
-mstatus_little-endian:    
+mstatus_little_endian_32:    
   config: 
-    - check ISA:=regex(.*64.*); check ISA:=regex(.*I.*Zicsr.*);
+    - check ISA:=regex(.*I.*Zicsr.*RV32.*); check little_endian_support=True; 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mstatush >> 5) & (mstatus >> 4) & (mstatus >> 6) == 0 : 0 		# checks if all three of these bits are set to 0, indicating that MBE, SBE, and UBE are all disabled. When these bits are all disabled, the processor is in little-endian mode, and accesses made to memory will be little-endian.
-
-
-mstatus_big_endian:    
+    (mstatush >> 5) & (mstatus >> 4) & (mstatus >> 6) == 0 : 0 # when MBE = 0 and SBE = 0 and UBE = 0, accesses made are little endian
+  
+mstatus_little_endian_64:    
   config: 
-    - check ISA:=regex(.*64.*); check ISA:=regex(.*I.*Zicsr.*S.*); check big_endian_support=True; 
+    - check ISA:=regex(.*I.*Zicsr.*RV64.*); check little_endian_support=True; 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mstatush >> 4) & 0x1 == 0x01 : 0 			# ensures that certain instructions or operations are only executed when the processor is in supervisor mode and in big-endian mode 
-	(mstatus >> 37) & 0x1 == 0x01 : 0 			# checks the sixth least significant bit of the upper 32 bits of the mstatus register to ensure that machine-mode byte enable (MBE) is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that MBE is enabled 
-
-	(mstatus >> 38) & 0x1 == 0x01 : 0 			# checks the seventh least significant bit of the upper 32 bits of the mstatus register to ensure that machine-mode user byte enable (UBE) is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that UBE is enabled
-
-	(mstatus >> 39) & 0x1 == 0x01 : 0 			# checks the eighth least significant bit of the upper 32 bits of the mstatus register to ensure that machine-mode supervisor timer interrupt enable is set to enabled. If this bit is set to 1, the coverpoint will evaluate to 0, indicating that supervisor timer interrupt enable is enabled								   
-
-
+    (mstatus >> 36) & (mstatus >> 35) & (mstatus >> 6) == 0 : 0 # when MBE = 0 and SBE = 0 and UBE = 0, accesses made are little endian   
+   
 mstatus_checking_SD:    
   config: 
     - check ISA:=regex(.*I.*Zicsr.*); 
+  
   csr_comb: 
-    	mstatus >> (xlen-1) == 1 : 0 				# The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state 
-    	mstatus >> (xlen-1) == 0 : 0 				# The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state 
-
-
-#####################################################################################################################################################################################
+    mstatus >> (xlen-1) == 1: 0 # The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state 
+    mstatus >> (xlen-1) == 0: 0 # The SD bit is read-only and is set when either the FS, VS bits encode a Dirty state 
       
 mtvec:  
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mtvec & 0x02 == 0x02 : 0 				# This coverpoint checks the second least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x04 == 0x04 : 0  				# This coverpoint checks the third least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x08 == 0x08 : 0  				# This coverpoint checks the fourth least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x10 == 0x10 : 0  				# This coverpoint checks the fifth least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x20 == 0x20 : 0  				# This coverpoint checks the sixth least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x40 == 0x40 : 0  				# This coverpoint checks the seventh least significant bit of the mtvec register to see if it is set to 1.
-	mtvec & 0x80 == 0x80 : 0  				# This coverpoint checks the eighth least significant bit of the mtvec register to see if it is set to 1.
-    
-#####################################################################################################################################################################################
+    (mtvec << 1) & 0x01 == 0x01 : 0				# checking if Asynchronous interrupts set pc to BASE+4×cause.
     
 mideleg:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*);
+    - check ISA:=regex(.*I.*Zicsr.*);
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mideleg >> 3) & 0x01 == 0x01 : 0 			# Machine software interrupt is pending
-	(mideleg >> 7) & 0x01 == 0x01 : 0 			# Machine timer interrupt is pending
-	(mideleg >> 11) & 0x1 == 0x01 : 0 			# Machine external interrupt is pending
-	(mideleg >> 1) & 0x01 == 0x01 : 0 			# Machine software interrupt is masked
-	(mideleg >> 5) & 0x01 == 0x01 : 0 			# Machine timer interrupt is masked
-	(mideleg >> 9) & 0x1 == 0x01 : 0 			# Machine external interrupt is masked
-	mideleg == 0x0000 : 0 					# All interrupts are unmasked and no interrupts are pending
-	mideleg == 0x000F : 0 					# All interrupts are masked and no interrupts are pending
-	mideleg == 0xFF00 : 0 					# All interrupts are unmasked and all interrupts are pending
-	mideleg == 0x0001 : 0 					# Machine software interrupt is pending and all other interrupts are unmasked
-	mideleg == 0x0010 : 0 					# Machine timer interrupt is pending and all other interrupts are unmasked
-	mideleg == 0x0100 : 0 					# Machine external interrupt is pending and all other interrupts are unmasked
 
-#####################################################################################################################################################################################
+     (mideleg >> 3) & 0x01 == 0x01 : 0			# Machine software interrupt
+     (mideleg >> 7) & 0x01 == 0x01 : 0			# Machine timer interrupt
+     (mideleg >> 11) & 0x1 == 0x01 : 0			# Machine external interrupt
+
+mideleg_Smode:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*S.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+     (mideleg >> 5) & 0x01 == 0x01 : 0			# if mideleg[5] is not set, STIs can be taken in any mode	
+     (mideleg >> 1) & 0x01 == 0x01 : 0			# Supervisor software interrupt
+     (mideleg >> 5) & 0x01 == 0x01 : 0			# Supervisor timer interrupt
+     (mideleg >> 9) & 0x01 == 0x01 : 0			# Supervisor external interrupt
      
 medeleg:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-     medeleg & 0x10 == 0x10 : 0				# checks the bit 4 of the medeleg register to see if it is set to 1, which would indicate an environment call from M-mode
-	medeleg & 0x20 == 0x20 : 0				# checks the bit 5 of the medeleg register to see if it is set to 1, which would indicate an instruction page fault
-	medeleg & 0x40 == 0x40 : 0				# checks the bit 6 of the medeleg register to see if it is set to 1, which would indicate a load page fault
-	medeleg & 0x80 == 0x80 : 0				# checks the bit 7 of the medeleg register to see if it is set to 1, which would indicate a store/AMO page fault
-	medeleg & 0x100 == 0x100 : 0				# checks the bit 8 of the medeleg register to see if it is set to 1, which would indicate a breakpoint
-	medeleg & 0x200 == 0x200 : 0				# checks the bit 9 of the medeleg register to see if it is set to 1, which would indicate a breakpoint	
-	medeleg & 0x400 == 0x400 : 0				# checks the bit 10 of the medeleg register to see if it is set to 1, which would indicate a machine-mode timer interrupt	
-	medeleg & 0x800 == 0x800 : 0				# checks the bit 11 of the medeleg register to see if it is set to 1, which would indicate a machine-mode external interrupt	
-	medeleg & 0x1000 == 0x1000 : 0			# checks the bit 12 of the medeleg register to see if it is set to 1, which would indicate a machine-mode software interrupt	
-	medeleg & 0x2000 == 0x2000 : 0			# checks the bit 13 of the medeleg register to see if it is set to 1, which would indicate a machine-mode timer interrupt
-	medeleg & 0x4000 == 0x4000 : 0			# checks the bit 14 of the medeleg register to see if it is set to 1, which would indicate a machine-mode external interrupt
-	medeleg & 0x8000 == 0x8000 : 0			# checks the bit 15 of the medeleg register to see if it is set to 1, which would indicate a machine-mode software interrupt			
-
-#####################################################################################################################################################################################
+     (medeleg >> 11) & 0x01 = 0x00 : 0			# medeleg[11] is read only zero
+     medeleg & 0x00 == 0 : 0					# instruction address misalligned
+     medeleg & 0x01 == 0x01 : 0				# instruction access fault
+     medeleg & 0x02 == 0x02 : 0				# illegal instruction
+     medeleg & 0x04 == 0x04 : 0				# load address misalligned
+     medeleg & 0x05 == 0x05 : 0				# load access fault	
+     medeleg & 0x06 == 0x06 : 0				# Store/AMO address misaligned	
+     medeleg & 0x07 == 0x07 : 0				# Store/AMO access fault	
+     medeleg & 0x08 == 0x08 : 0				# Environment call from U-mode	
+     medeleg & 0x09 == 0x09 : 0				# Environment call from S-mode
+     medeleg & 0x11 == 0x11 : 0				# Environment call from M-mode
+     medeleg & 0x12 == 0x12 : 0				# Instruction page fault
+     medeleg & 0x13 == 0x13 : 0				# Load page fault	
+     medeleg & 0x15 == 0x15 : 0			 	# Store/AMO page fault				
 
 mie:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mie & 0x01 == 0x01 : 0 				# Interrupts are masked
-	mie & 0x01 == 0x00 : 0 				# Interrupts are not masked
-	mie == 0xffffffff : 0 					# All interrupt sources are enabled
-	mie == 0x00000000 : 0 					# All interrupt sources are disabled
-	mie & 0x80000 == 0x80000 : 0 				# Machine software interrupt is enabled
-	mie & 0x400000 == 0x400000 : 0 			# Machine timer interrupt is enabled
-	mie & 0x2000000 == 0x2000000 : 0 			# Machine external interrupt is enabled
+    (mie >> 3) & 0x01 == 0x01 : 0				# checking MSIE bit
+    (mie >> 3) & 0x01 == 0x00 : 0				# If a system has only one hart, or if a platform standard supports the delivery of machine-level interprocessor interrupts through 
+    								# external interrupts (MEI) instead
+    (mie >> 7) & 0x01 == 0x01 : 0				# checking MTIE bit
+    (mie >> 11) & 0x01 == 0x01 : 0				# checking MEIE
     
 mie_Smode:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*); 
+    - check ISA:=regex(.*I.*Zicsr.*S.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mie & 0x40000 == 0x40000 : 0 				# Supervisor software interrupt is enabled
-	mie & 0x200000 == 0x200000 : 0 			# Supervisor timer interrupt is enabled
-	mie & 0x1000000 == 0x1000000 : 0 			# Supervisor external interrupt is enabled
-	
-mie_Umode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*U.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	mie & 0x800000 == 0x800000 : 0 			# User external interrupt is enabled
-	mie & 0x100000 == 0x100000 : 0 			# User timer interrupt is enabled
-	mie & 0x20000 == 0x20000 : 0 				# User software interrupt is enabled
-    
-#####################################################################################################################################################################################
+    (mie >> 1) & 0x01 == 0x01 : 0				# checking SSIE bit
+    (mie >> 5) & 0x01 == 0x01 : 0				# STIP interrupt delegtion control is located in bit 5
+    (mie >> 9) & 0x01 == 0x01 : 0				# checking SEIE
     
 mip:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mip == 0xffffffff : 0 					# All interrupt sources are pending
-	mip & 0x7fff0000 == 0x7fff0000 : 0 			# All interrupts are pending in all privilege levels
-	mip & 0x7fff0000 == 0x00000000 : 0 			# No interrupts are pending in any privilege level
-	mip & 0x40000 == 0x40000 : 0 				# Machine software interrupt is pending
-	mip & 0x200000 == 0x200000 : 0 			# Machine timer interrupt is pending
-	mip & 0x1000000 == 0x1000000 : 0 			# Machine external interrupt is pending
+    (mip >> 3) & 0x01 == 0x01 : 0				# checking MSIP bit
+    (mip >> 3) & 0x01 == 0x00 : 0				# If a system has only one hart, or if a platform standard supports the delivery of machine-level interprocessor interrupts through 
+    								# external interrupts (MEI) instead
+    (mip >> 7) & 0x01 == 0x01 : 0				# checking MTIP bit
+    (mip >> 11) & 0x01 == 0x01 : 0				# checking MEIP
 
 mip_Smode:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*); 
+    - check ISA:=regex(.*I.*Zicsr.*S.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mip & 0x100000 == 0x100000 : 0 			# Supervisor timer interrupt is pending
-	mip & 0x20000 == 0x20000 : 0  			# Supervisor software interrupt is pending
-	mip & 0x800000 == 0x800000 : 0  			# Supervisor external interrupt is pending
-    
-mip_Umode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*U.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	mip & 0x7fff0000 == 0x00010000 : 0  			# Only user interrupts are pending
-	mip & 0x10000 == 0x10000 : 0  			# User software interrupt is pending
-	mip & 0x80000 == 0x80000 : 0  			# User timer interrupt is pending
-	mip & 0x400000 == 0x400000 : 0  			# User external interrupt is pending
-
-#####################################################################################################################################################################################
+    (mip >> 1) & 0x01 == 0x01 : 0				# checking SSIP bit
+    (mip >> 5) & 0x01 == 0x01 : 0				# STIP interrupt delegtion control is located in bit 5
+    (mip >> 9) & 0x1 == 0x01 : 0				# checking SEIP
 
 mcause:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*);
+    - check ISA:=regex(.*I.*Zicsr.*);
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mcause >> 8) & 0x01 == 0x01 : 0			# Exception or interrupt was caused by an instruction
-	(mcause >> 8) & 0x01 == 0x00 : 0			# Exception or interrupt was caused by a system event
-	(mcause & 0xff) == 0x00 : 0				# Instruction address misaligned exception
-	(mcause & 0xff) == 0x01 : 0				# Instruction access fault exception
-	(mcause & 0xff) == 0x02 : 0				# Illegal instruction exception
-	(mcause & 0xff) == 0x03 : 0				# Breakpoint exception
-	(mcause & 0xff) == 0x04 : 0				# Load address misaligned exception
-	(mcause & 0xff) == 0x05 : 0				# Load access fault exception
-	(mcause & 0xff) == 0x06 : 0				# Store/AMO address misaligned exception
-	(mcause & 0xff) == 0x07 : 0				# Store/AMO access fault exception
-	(mcause & 0xff) == 0x08 : 0				# Environment call from U-mode exception
-	(mcause & 0xff) == 0x09 : 0				# Environment call from S-mode exception
-	(mcause & 0xff) == 0x0a : 0				# Environment call from M-mode exception
-	(mcause & 0xff) == 0x0b : 0				# Instruction page fault exception
-	(mcause & 0xff) == 0x0c : 0				# Load page fault exception
-	(mcause & 0xff) == 0x0d : 0				# Store/AMO page fault exception
-	(mcause >> 10) & 0x01 == 0x01 : 0			# Exception or interrupt was caused by an instruction fetch
-	(mcause >> 10) & 0x01 == 0x00 : 0			# Exception or interrupt was caused by a data access
-	(mcause >> 3) & 0x07 == 0x00 : 0 			# Exception or interrupt occurred at machine level (M-mode)
-	(mcause & 0xff) == 0x32 : 0				# Timer interrupt was caused by a compare match on timer 0
-	(mcause & 0xff) == 0x33 : 0  				# Timer interrupt was caused by a compare match on timer 1
-	(mcause & 0xff) == 0x34 : 0  				# Timer interrupt was caused by a compare match on timer 2
-	(mcause & 0xff) == 0x35 : 0  				# Timer interrupt was caused by a compare match on timer 3
-	(mcause & 0xff) == 0x42 : 0  				# Software interrupt was triggered by the mret instruction
-	(mcause & 0xff) == 0x80 : 0 				# Machine mode interrupt was triggered by the wfi instruction
-	(mcause & 0xff) == 0x81 : 0 				# Machine mode interrupt was triggered by the mcycle timer
-	(mcause & 0xff) == 0x82 : 0 				# Machine mode interrupt was triggered by the minstret timer
-	(mcause & 0xff) == 0x83 : 0 				# Machine mode interrupt was triggered by the mhpmcounter3 timer
-	
-	
-
-mcause_Smode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mcause & 0xff) == 0x84 : 0 				# Supervisor mode interrupt was triggered by the scycle timer
-	(mcause & 0xff) == 0x85 : 0 				# Supervisor mode interrupt was triggered by the sinstret timer
-	(mcause & 0xff) == 0x86 : 0 				# Supervisor mode interrupt was triggered by the shpmcounter3 timer
-	(mcause & 0xff) == 0x40 : 0  				# Software interrupt was triggered by the sret instruction
-	(mcause >> 3) & 0x07 == 0x01 : 0 			# Exception or interrupt occurred at supervisor level (S-mode)
-    
-mcause_Umode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*U.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mcause & 0xff) == 0x88 : 0 				# User mode interrupt was triggered by the ucycle timer
-	(mcause & 0xff) == 0x89 : 0 				# User mode interrupt was triggered by the uinstret timer
-	(mcause & 0xff) == 0x8a : 0				# User mode interrupt was triggered by the uhpmcounter3 timer
-	(mcause & 0xff) == 0x41 : 0  				# Software interrupt was triggered by the uret instruction
-	(mcause >> 3) & 0x07 == 0x02 : 0 			# Exception or interrupt occurred at user level (U-mode)
-	(mcause & 0xff) == 0x20 : 0				# User software interrupt
-
-#####################################################################################################################################################################################
+	(mcause >> 8) & 0x01 == 0x01 : 0			# setting bit 8 allows user mode to be delegated to a lower privilege trap handler
 		
+mcause_interrupt:    
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*);
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+	mcause >> (xlen-2) == 0x01 : 0			# to check if an interrupt comes	
+
 mcycle:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mcycle == 0x0 : 0					# where the value in mcycle register is 0
-	mcycle > 1000 : 0 					# More than 1000 cycles were executed
-	mcycle > 10000 : 0					# More than 10000 cycles were executed
-	mcycle > 100000 : 0					# More than 100000 cycles were executed	
-
-#####################################################################################################################################################################################
+	mcycle == 0x0 : 0					# where the value in mcycle register is 0.	
 
 minstret:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	minstret > 1000 : 0 					# More than 1000 instructions were executed in the last second
-	minstret > 10000 : 0 					# More than 10000 instructions were executed in the last second
-	minstret > 100000 : 0 					# More than 100000 instructions were executed in the last second
-
-#####################################################################################################################################################################################
+	minstret == 0x0 : 0					# where the value in minstret register is 0.
 
 mhpmcounter:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mhpmcounter3 > 1000 : 0 				# More than 1000 memory accesses occurred
-	mhpmcounter3 > 10000 : 0 				# More than 10000 memory accesses occurred
-	mhpmcounter3 > 100000 : 0 				# More than 100000 memory accesses occurred
-
-#####################################################################################################################################################################################
+	mhpmcounter3 == 0x0 : 0				# where the value in mhpmcounter3 register is 0.
+	mhpmcounter4 == 0x0 : 0				# where the value in mhpmcounter4 register is 0.
+	mhpmcounter31 == 0x0 : 0				# where the value in mhpmcounter31 register is 0.
 
 mhpmevent:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
 	mhpmevent3 == 0x0 : 0					# where the value in mhpmevent3 register is 0.
-	mhpmevent3 > 1000 : 0					# More than 1000 memory accesses occurred
-	mhpmevent3 > 10000 : 0 				# More than 10000 memory accesses occurred
-	mhpmevent3 > 100000 : 0 				# More than 100000 memory accesses occurred
-
-#####################################################################################################################################################################################
+	mhpmevent20 == 0x0 : 0					# where the value in mhpmevent20 register is 0.
+	mhpmevent31 == 0x0 : 0					# where the value in mhpmevent31 register is 0.
 	
 mcounteren:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mcounteren >> 0) & (mcounteren >> 1) & (mcounteren >> 2) == 0x00 : 0 # When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause an illegal instruction exception.
-	mcounteren & 0x07 == 0x07 : 0				# checks that the three least significant bits are all 1
-	mcounteren & 0x07 == 0x00 : 0				# checks that the three least significant bits are either all 0
-    	mcounteren & 0x07 == 0x05 : 0				# for the next 3, checking that the three least significant bits are alternating 1s and 0s (e.g. 101, 010, or 011)
-    	mcounteren & 0x07 == 0x02 : 0
-    	mcounteren & 0x07 == 0x06 : 0
-	
-mcounteren_S and U mode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*U.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mcounteren >> 0) & (mcounteren >> 1) & (mcounteren >> 2) == 0x00 : 0 # When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause an illegal instruction exception.
-
-    	
-
-#####################################################################################################################################################################################
+	(mcounteren >> 0) & (mcounteren >> 1) & (mcounteren >> 2) == 0x00 : 0 # When the CY, TM, IR, or HPMn bit in the mcounteren register is clear, attempts to read the
+								# cycle, time, instret, or hpmcountern register while executing in S-mode or U-mode will cause
+								# an illegal instruction exception.
+	mcounteren & 0x00 == 0x01 : 0													
+	mcounteren & 0x07 == 0x00 : 0				# HPMn bit in the mcounteren register is clear
+	(mcounteren >> 1) & 0x01 == 0x01 : 0
+	(mcounteren >> 2) & 0x01 == 0x01 : 0
+	(mcounteren >> 3) & 0x01 == 0x01 : 0
 
 mcountinhibit:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*);
+    - check ISA:=regex(.*I.*Zicsr.*);
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mcountinhibit == 1 : 0					# checks that the value of the register is either 1
-	mcountinhibit == 1 : 0					# checks that the value of the register is either 0
-	mcountinhibit != 0 : 0					# checks that the value of the register is any value other than 0
-
-#####################################################################################################################################################################################
+	(mcountinhibit >> 0) & (mcountinhibit >> 2) == 0x00 : 0 # When the CY, IR bit in the mcountinhibit register is clear, the cycle, instret register increments as usual.
+	mcountinhibit & 0x03 == 0x00 : 0			# HPMn bit in the mcounteren register is clear
+	mcountinhibit & 0x00 == 0x01 : 0			# HPMn bit in the mcounteren register is clear
+	(mcountinhibit >> 2) & 0x01 == 0x01 : 0
+	(mcountinhibit >> 3) & 0x01 == 0x01 : 0
 
 mscratch:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mscratch == 0x12345678 : 0				# checks that the value of the mscratch CSR is 0x12345678
-	mscratch >= 0x00000000 && mscratch <= 0xFFFFFFFF : 0	# checks that the value of the mscratch CSR is within the range of 0x00000000 to 0xFFFFFFFF, inclusive
-	mscratch != 0xDEADBEEF : 0				# checks that the value of the mscratch CSR is not equal to 0xDEADBEEF	
-	
-
-#####################################################################################################################################################################################
+	mscratch == 0x0 : 0					# where the value in mscratch register is 0.
 	
 mepc:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	(mepc >> 10) & 0x01 == 0x01 : 0 			# Exception or interrupt was caused by an instruction fetch
-	(mepc >> 10) & 0x01 == 0x00 : 0 			# Exception or interrupt was caused by a data access
-	(mepc >> 3) & 0x07 == 0x00 : 0 			# Exception or interrupt occurred at machine level (M-mode)
-	(mepc & 0x3) == 0x00 : 0 				# Instruction was aligned on a 4-byte boundary
-	(mepc & 0x3) == 0x01 : 0 				# Instruction was aligned on a 2-byte boundary
-	(mepc & 0x3) == 0x02 : 0 				# Instruction was aligned on a 1-byte boundary
-	(mepc & 0x3) == 0x03 : 0 				# Instruction was unaligned
-	(mepc >> 2) & 0x01 == 0x00 : 0 			# Instruction was a load or store instruction
-	(mepc >> 2) & 0x01 == 0x01 : 0 			# Instruction was an arithmetic or logical instruction
-
-mepc_Smode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*S.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mepc >> 3) & 0x07 == 0x01 : 0 			# Exception or interrupt occurred at supervisor level (S-mode)
-	
-mepc_Umode:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*U.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mepc >> 3) & 0x07 == 0x02 : 0 			# Exception or interrupt occurred at user level (U-mode)
-
-#####################################################################################################################################################################################
+	mepc == 0 : 0						# where the value in mepc register is 0.
+	mepc & 0x03 == 0 : 0					# On implementations that support only IALIGN=32, the two low bits (mepc[1:0]) are always zero.
 
 mtval:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 			
-  mnemonics: 							
-    csrrw: 0
-    csrrs: 0
-  csr_comb:							
-  	mtval == 0 : 0 					# checks that the value written to or modified in the mtval CSR is 0. This could be useful for verifying that the mtval CSR is being used correctly in your design or implementation.
-  	
-  	
-mtval_multiple_of_4:
-  config:
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*);
-  mnemonics:
+    - check ISA:=regex(.*I.*Zicsr.*); 
+  mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	mtval % 4 == 0: 0					# coverpoint checks that the value written to or modified in the mtval CSR is a multiple of 4.
-  	
-  	
-mtval_multiple_of_4_not_8:
-  config:
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*);
-  mnemonics:
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	mtval % 4 == 0 and mtval % 8 != 0: 0			# checks that the value written to or modified in the mtval CSR is a multiple of 4 but not a multiple of 8
-  	
-#####################################################################################################################################################################################
+  	mtval == 0 : 0 					# mtval is either set to zero or written with exception-specific information to assist software in handling the trap. 
 
 mconfigptr:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-  	mconfigptr == 0x12345678 : 0				# checks that the value of the mconfigptr CSR is 0x12345678				
-  	mconfigptr % 4 == 0 : 0				# checks that the value of the mconfigptr CSR is a multiple of 4
-  	mconfigptr >= 0x80000000 && mconfigptr < 0x90000000 : 0	# checks that the value of the mconfigptr CSR is within the range of 0x80000000 to 0x8FFFFFFF, inclusive 
-  	mconfigptr & 0xFFFFF000 == 0x12345000 : 0		# checks that the value of the mconfigptr CSR is aligned to a 1MB boundary, with the address 0x12345000 being the base address of the memory region
-  	
-  	
-#####################################################################################################################################################################################
+  	mconfigptr == 0 : 0 					# mconfigptr may be zero to indicate the configuration data structure does not exist or that an alternative mechanism must be used to 
+  									# locate it.
 
 menvcfg:    
   config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
+    - check ISA:=regex(.*I.*Zicsr.*); 
   mnemonics: 
     csrrw: 0
     csrrs: 0
   csr_comb:
-	menvcfg == 0x12345678 : 0 				# checks that the value of the menvcfg CSR is 0x12345678
-	menvcfg >= 0x00000000 && menvcfg <= 0xFFFFFFFF : 0	# checks that the value of the menvcfg CSR is within the range of 0x00000000 to 0xFFFFFFFF, inclusive
-	menvcfg != 0xDEADBEEF : 0				# checks that the value of the menvcfg CSR is not equal to 0xDEADBEEF
-	
-
-#####################################################################################################################################################################################
-
-mtime:    
-  config: 
-    - check ISA:=regex(.*64.*); check ISA:=regex(.*I.*Zicsr.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	 mtime >= 0x0000000000000000 && mtime <= 0xFFFFFFFFFFFFFFFF : 0			# checks that the value of the mtime CSR is within the range of 0x0000000000000000 to 0xFFFFFFFFFFFFFFFF, inclusive
-    	(mtime >> 4) & 0x1 == 0x1 : 0				# checks that the fifth bit of the mtime CSR is set to 1 and the sixth bit is set to 0
-	mtime != 0xDEADBEEFDEADBEEF : 0			# checks that the value of the mtime CSR is not equal to 0xDEADBEEFDEADBEEF
-	mtime == 0x12345678ABCDEF : 0				# checks that the value of the mtime CSR is 0x12345678ABCDEF
-    	mtime % 4 == 0 : 0					# checks that the value of the mtime CSR is a multiple of 4
-
-#####################################################################################################################################################################################
-
-mseccfg:    
-  config: 
-    - check ISA:=regex(.*32.*); check ISA:=regex(.*I.*Zicsr.*); 
-  mnemonics: 
-    csrrw: 0
-    csrrs: 0
-  csr_comb:
-	(mseccfg >> 4) & 0x1 == 0x1 : 0			# checks that the fifth bit of the mseccfg CSR is set to 1
-    	(mseccfg >> 5) & 0x1 == 0x0 : 0			# checks that the sixth bit of the mseccfg CSR is set to 0
-	mseccfg != 0xDEADBEEF : 0				# checks that the value of the menvcfg CSR is not equal to 0xDEADBEEF
-	mseccfg == 0x0 : 0					# checks that the value of the mseccfg CSR is 0
-    	mseccfg % 4 == 0 : 0					# checks that the value of the mseccfg CSR is a multiple of 4
-
-#####################################################################################################################################################################################
+  	 	menvcfg & 0x01 == 1 : 0 			# If bit FIOM (Fence of I/O implies Memory) is set to one in menvcfg, FENCE instructions executed
+		(menvcfg >> 62) & 0x01 == 1 : 0		# When PBMTE=1, Svpbmt is available for S-mode and G-stage address translation.
 
 
 pmpcfg:
