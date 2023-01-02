@@ -1,0 +1,398 @@
+ecall:
+  config: 
+    - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
+  mnemonics: 
+    ecall: 0
+ebreak:
+  config: 
+    - check ISA:=regex(.*I.*); def rvtest_mtrap_routine=True 
+  mnemonics: 
+    ebreak: 0
+  
+mip:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    mip & 0x00007fff == 0x00007fff : 0 			
+    mip & 0x00007fff == 0x00000000 : 0
+    ((mip >> 3) & 0x01) == 0x01 : 0
+    ((mip >> 7) & 0x01) == 0x01 : 0
+    ((mip >> 11) & 0x01) == 0x01 : 0 
+    ((mip >> 1) & 0x01) == 0x01 : 0
+    ((mip >> 5) & 0x01) == 0x01 : 0
+    ((mip >> 9) & 0x01) == 0x01 : 0
+    
+mie:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    ((mie >> 0) & 0x01) == 0x01 : 0
+    ((mie >> 0) & 0x01) == 0x00 : 0
+    ((mie >> 3) & 0x01) == 0x01 : 0
+    ((mie >> 7) & 0x01) == 0x01 : 0
+    ((mie >> 11) & 0x01) == 0x01 : 0
+    ((mie >> 1) & 0x01) == 0x01 : 0
+    ((mie >> 5) & 0x01) == 0x01 : 0
+    ((mie >> 9) & 0x01) == 0x01 : 0
+    
+mcause:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mcause >> 31) & 1 == 1 : 0
+    (mcause >> 31) & 1 == 0 : 0
+    
+    
+mcycle:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    mcycle == 0x0 : 0
+    
+    
+misa:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    ((misa >> 3) & 0x01) == 0 & ((misa >> 5) & 0x01) == 0 : 0
+    misa >> (xlen-2) == 0x01 : 0
+    misa >> (xlen-2) == 0x02 : 0
+    misa >> (xlen-2) == 0x03 : 0
+    
+    
+mstatus:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mstatus >> 3) & 0x01 == 0x01 : 0
+    (mstatus >> 7) & 0x01 == 0x01 : 0
+    (mstatus >> 10) & 0x3 == 0x3 : 0
+    (mstatus >> 17) & 0x1 == 0x01 : 0
+    (mstatus >> 19) & 0x1 == 0x01 : 0
+    (mstatus >> 20) & 0x1 == 0x01 : 0
+    (mstatus >> 21) & 0x1 == 0x01 : 0 
+    (mstatus >> 1) & 0x01 == 0x01 : 0
+    (mstatus >> 5) & 0x01 == 0x01 : 0
+    (mstatus >> 8) & 0x01 == 0x01 : 0
+    (mstatus >> 22) & 0x1 == 0x01 : 0
+    (mstatus >> 10) & 0x3 == 0x01 : 0
+    (mstatus >> 10) & 0x3 == 0x02 : 0
+    (mstatus >> 18) & 0x1 == 0x01 : 0
+    (mstatus >> 37) & 0x1 == 0x01 : 0
+    (mstatus >> 6) & 0x1 == 0x01 : 0
+    mstatus >> (xlen-1) == 1 : 0
+    mstatus >> (xlen-1) == 0 : 0 
+
+
+mideleg:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mideleg >> 3) & 0x01 == 0x01 : 0
+    (mideleg >> 7) & 0x01 == 0x01 : 0
+    (mideleg >> 11) & 0x1 == 0x01 : 0
+    (mideleg >> 5) & 0x01 == 0x01 : 0
+    (mideleg >> 1) & 0x01 == 0x01 : 0
+    (mideleg >> 9) & 0x01 == 0x01 : 0
+    
+    
+medeleg:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (medeleg >> 0) & 0x01 == 0x01 : 0
+    (medeleg >> 1) & 0x01 == 0x01 : 0
+    (medeleg >> 2) & 0x01 == 0x01 : 0
+    (medeleg >> 3) & 0x01 == 0x01 : 0
+    (medeleg >> 4) & 0x01 == 0x01 : 0
+    (medeleg >> 5) & 0x01 == 0x01 : 0
+    (medeleg >> 6) & 0x01 == 0x01 : 0
+    (medeleg >> 7) & 0x01 == 0x01 : 0
+    (medeleg >> 8) & 0x01 == 0x01 : 0
+    (medeleg >> 9) & 0x01 == 0x01 : 0
+    (medeleg >> 12) & 0x01 == 0x01 : 0
+    (medeleg >> 13) & 0x01 == 0x01 : 0
+    (medeleg >> 15) & 0x01 == 0x01 : 0
+    
+    
+minstret:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    minstret > 1 : 0
+    
+    
+    
+mepc:
+  config: 
+    - check ISA:=regex(.*32.*); regex(.*I.*Zicsr.*); 
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (mepc >> 3) & 0x07 == 0x00 : 0
+    (mepc & 0x3) == 0x00 : 0
+    (mepc & 0x3) == 0x01 : 0
+    (mepc & 0x3) == 0x02 : 0
+    (mepc & 0x3) == 0x03 : 0
+    (mepc >> 3) & 0x07 == 0x01 : 0 
+    (mepc >> 3) & 0x07 == 0x02 : 0 
+    
+    
+ 
+pmpcfg:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    pmpcfg0 & 0x20 == 0 : 0
+    pmpcfg0 & 0x40 == 0 : 0
+    pmpcfg0 & 0x80 == 0x80 : 0
+    (pmpcfg0 >> 8) & 0x20 == 0 : 0
+    (pmpcfg0 >> 8) & 0x40 == 0 : 0
+    (pmpcfg0 >> 8) & 0x80 == 0x80 : 0
+    (pmpcfg0 >> 16) & 0x20 == 0 : 0
+    (pmpcfg0 >> 16) & 0x40 == 0 : 0
+    (pmpcfg0 >> 16) & 0x80 == 0x80 : 0
+    (pmpcfg0 >> 24) & 0x20 == 0 : 0
+    (pmpcfg0 >> 24) & 0x40 == 0 : 0
+    (pmpcfg0 >> 24) & 0x80 == 0x80 : 0
+    pmpcfg1 & 0x20 == 0 : 0
+    pmpcfg1 & 0x40 == 0 : 0
+    pmpcfg1 & 0x80 == 0x80 : 0
+    (pmpcfg1 >> 8) & 0x20 == 0 : 0
+    (pmpcfg1 >> 8) & 0x40 == 0 : 0
+    (pmpcfg1 >> 8) & 0x80 == 0x80 : 0
+    (pmpcfg1 >> 16) & 0x20 == 0 : 0
+    (pmpcfg1 >> 16) & 0x40 == 0 : 0
+    (pmpcfg1 >> 16) & 0x80 == 0x80 : 0
+    (pmpcfg1 >> 24) & 0x20 == 0 : 0
+    (pmpcfg1 >> 24) & 0x40 == 0 : 0
+    (pmpcfg1 >> 24) & 0x80 == 0x80 : 0
+    pmpcfg2 & 0x20 == 0 : 0
+    pmpcfg2 & 0x40 == 0 : 0
+    pmpcfg2 & 0x80 == 0x80 : 0
+    (pmpcfg2 >> 8) & 0x20 == 0 : 0
+    (pmpcfg2 >> 8) & 0x40 == 0 : 0
+    (pmpcfg2 >> 8) & 0x80 == 0x80 : 0
+    (pmpcfg2 >> 16) & 0x20 == 0 : 0
+    (pmpcfg2 >> 16) & 0x40 == 0 : 0
+    (pmpcfg2 >> 16) & 0x80 == 0x80 : 0
+    (pmpcfg2 >> 24) & 0x20 == 0 : 0
+    (pmpcfg2 >> 24) & 0x40 == 0 : 0
+    (pmpcfg2 >> 24) & 0x80 == 0x80 : 0
+    pmpcfg3 & 0x20 == 0 : 0
+    pmpcfg3 & 0x40 == 0 : 0
+    pmpcfg3 & 0x80 == 0x80 : 0
+    (pmpcfg3 >> 8) & 0x20 == 0 : 0
+    (pmpcfg3 >> 8) & 0x40 == 0 : 0
+    (pmpcfg3 >> 8) & 0x80 == 0x80 : 0
+    (pmpcfg3 >> 16) & 0x20 == 0 : 0
+    (pmpcfg3 >> 16) & 0x40 == 0 : 0
+    (pmpcfg3 >> 16) & 0x80 == 0x80 : 0
+    (pmpcfg3 >> 24) & 0x20 == 0 : 0
+    (pmpcfg3 >> 24) & 0x40 == 0 : 0
+    (pmpcfg3 >> 24) & 0x80 == 0x80 : 0
+pmptor:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x08 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0
+pmpna4:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x10 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0
+pmpnapot:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config: 
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=True; def rvtest_mtrap_routine=True
+  mnemonics: 
+    csrrw: 0
+    csrrs: 0
+  csr_comb:
+    (pmpcfg0 >> 16) & 0x18 == 0x18 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x01 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x02 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x04 : 0
+    (pmpcfg0 >> 16) & 0x01 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x02 == 0x00 : 0
+    (pmpcfg0 >> 16) & 0x04 == 0x00 : 0
+misalign-lh:
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  mnemonics:
+    lh: 0
+  val_comb:
+    'ea_align == 1': 0
+misalign-lhu:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    lhu: 0
+  val_comb:
+    'ea_align == 1': 0
+misalign-lw:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    lw: 0
+  val_comb:
+    'ea_align == 1': 0
+    'ea_align == 2': 0
+    'ea_align == 3': 0
+misalign-sh:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    sh: 0
+  val_comb:
+    'ea_align == 1': 0
+misalign-sw:
+  config:
+    - check ISA:=regex(.*I.*); check hw_data_misaligned_support:=True
+    - check ISA:=regex(.*I.*Zicsr.*); check hw_data_misaligned_support:=False; def rvtest_mtrap_routine=True
+  cond: check ISA:=regex(.*I.*Zicsr.*)
+  mnemonics:
+    sw: 0
+  val_comb:
+    'ea_align == 1': 0
+    'ea_align == 2': 0
+    'ea_align == 3': 0
+misalign2-jalr:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    jalr: 0
+  val_comb:
+    'imm_val%2 == 1 and ea_align == 2': 0
+misalign1-jalr:
+  config: 
+    - check ISA:=regex(.*I.*)
+  mnemonics:
+    jalr: 0
+  val_comb:
+    'imm_val%2 == 0 and ea_align == 1': 0
+misalign-jal:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    jal: 0
+  val_comb:
+    'ea_align == 2': 0
+misalign-bge:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bge: 0
+  val_comb:
+    ' rs1_val>rs2_val and ea_align == 2': 0
+misalign-bgeu:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bgeu: 0
+  val_comb:
+    ' rs1_val>rs2_val and ea_align == 2': 0
+misalign-blt:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    blt: 0
+  val_comb:
+    ' rs1_val<rs2_val and ea_align == 2': 0
+misalign-bltu:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bltu: 0
+  val_comb:
+    ' rs1_val<rs2_val and ea_align == 2': 0
+misalign-bne:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    bne: 0
+  val_comb:
+    ' rs1_val!=rs2_val and ea_align == 2': 0
+misalign-beq:
+  config:
+    - check ISA:=regex(.*I.*C.*)
+    - check ISA:=regex(.*I.*Zicsr.*); check ISA:=regex(^[^C]+$); def rvtest_mtrap_routine=True 
+  cond: check ISA:=regex(.*I.*)
+  mnemonics:
+    beq: 0
+  val_comb:
+    ' rs1_val==rs2_val and ea_align == 2': 0
